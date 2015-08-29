@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
-    <ProjectGuid>{3ACC58AF-62A9-4D40-9C11-41F16D68B29B}</ProjectGuid>
+    <ProjectGuid>{C41F6F0C-E989-4355-B20D-F05E626A0607}</ProjectGuid>
     <OutputType>AppContainerExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>FezHat</RootNamespace>
@@ -136,8 +136,8 @@
       <Project>{173d0ffa-c307-4247-9f2a-7c82f50c1b2e}</Project>
       <Name>GHIElectronics.UAP.Shields.FEZHAT</Name>
     </ProjectReference>
-    <ProjectReference Include="com.ianlee.FezHat\com.ianlee.FezHat.vcxproj">
-      <Project>{F3298C0F-19FD-4385-9BC8-C412D9F8DAB8}</Project>
+    <ProjectReference Include="..\com.ianlee.FezHat\com.ianlee.FezHat.vcxproj">
+      <Project>{D5A4207A-E5DC-4517-815D-6B9CBAF2C674}</Project>
       <Name>com.ianlee.FezHat</Name>
     </ProjectReference>
   </ItemGroup>
