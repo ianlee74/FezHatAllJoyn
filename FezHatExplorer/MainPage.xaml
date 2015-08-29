@@ -14,11 +14,15 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <TextBlock Text="Available lightbulbs"/>
-            <ListBox ItemsSource="{Binding FezHats}" Grid.Row="1"
-             SelectedValue="{Binding SelectedFezHat,Mode=TwoWay}">
+            <ListBox ItemsSource="{Binding FezHats}" Grid.Row="1" SelectedValue="{Binding SelectedFezHat,Mode=TwoWay}">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <TextBlock Text="{Binding UniqueName}"/>
+                        <StackPanel>
+                            <TextBlock Text="{Binding DefaultAppName}"/>
+                            <TextBlock Text="{Binding UniqueName}"/>
+                            <TextBlock Text="{Binding ModelNumber}"/>
+                            <TextBlock Text="{Binding DateOfManufacture}"/>
+                        </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>

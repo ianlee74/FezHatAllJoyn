@@ -2,6 +2,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using Windows.Devices.AllJoyn;
 using Windows.UI.Core;
@@ -22,6 +23,9 @@ namespace FezHatExplorer
         public class FezHatItem
         {
             public string UniqueName { get; set; }
+            public string DefaultAppName { get; set; }
+            public string ModelNumber { get; set; }
+            public DateTimeOffset? DateOfManufacture { get; set; }
             public FezHatConsumer Consumer { get; set; }
         }
         public MainPage()
@@ -49,12 +53,18 @@ namespace FezHatExplorer
             await this.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
               async () =>
               {
-                  var joinResult = await FezHatConsumer.JoinSessionAsync(args, sender);
+                  // Get the about data.
+                  var aboutData = await AllJoynAboutDataView.GetDataBySessionPortAsync(args.UniqueName, _busAttachment, args.SessionPort);
+                  Debug.WriteLine("Found {0} on {1} from manufacturer: {2}. Connecting...", aboutData.AppName, aboutData.DeviceName, aboutData.Manufacturer);
 
+                  var joinResult = await FezHatConsumer.JoinSessionAsync(args, sender);                  
                   if (joinResult.Status != AllJoynStatus.Ok) return;
                   this.FezHats.Add(new FezHatItem()
                   {
                       UniqueName = args.UniqueName,
+                      DefaultAppName = aboutData.AppName,
+                      ModelNumber = aboutData.ModelNumber,
+                      DateOfManufacture = aboutData.DateOfManufacture,
                       Consumer = joinResult.Consumer
                   });
                   joinResult.Consumer.SessionLost += OnFezHatLost;

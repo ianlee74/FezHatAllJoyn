@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using Windows.Devices.AllJoyn;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.System.Profile;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -37,7 +39,10 @@ namespace FezHat
             this.InitializeComponent();
             this.Loaded += OnLoaded;
 
-            _isRunningOnPi = Windows.Foundation.Metadata.ApiInformation.IsTypePresent("Windows.Devices.Gpio.GpioController");
+            var ai = AnalyticsInfo.VersionInfo;
+            Debug.WriteLine(string.Format("Device Family = {0}", ai.DeviceFamily));
+            _isRunningOnPi = ai.DeviceFamily == "Windows.IoT";
+            //_isRunningOnPi = Windows.Foundation.Metadata.ApiInformation.IsTypePresent("Windows.Devices.Gpio.GpioController");             BUG? Always returns true regardless of the device.
             if (_isRunningOnPi)
             {
                 Task.Run(async () => _fezhat = await FEZHAT.CreateAsync());
@@ -78,6 +83,11 @@ namespace FezHat
             if (_isRunningOnPi)
             {
                 _fezhat.DIO24On = _redLedState;
+
+                // Go ahead and light up D2 & D3 too to make it more visible for the crowd.
+                var redColor = (byte)(_redLedState ? 255 : 0);
+                SetRgbLedD2Color(redColor, 0, 0);
+                SetRgbLedD3Color(redColor, 0, 0);
             }
         }
 
@@ -97,10 +107,15 @@ namespace FezHat
                 {
                     if (_isRunningOnPi)
                     {
-                        _fezhat.D2.Color = new FEZHAT.Color(interfaceMemberRed, interfaceMemberGreen, interfaceMemberBlue);
+                        SetRgbLedD2Color(interfaceMemberRed, interfaceMemberGreen, interfaceMemberBlue);
                     }
                     return FezHatSetRgbLedD2ColorResult.CreateSuccessResult();
                 }).AsAsyncOperation());
+        }
+
+        private void SetRgbLedD2Color(byte red, byte green, byte blue)
+        {
+            _fezhat.D2.Color = new FEZHAT.Color(red, green, blue);
         }
 
         public IAsyncOperation<FezHatSetRgbLedD3ColorResult> SetRgbLedD3ColorAsync(AllJoynMessageInfo info, bool interfaceMemberOn, byte interfaceMemberRed, byte interfaceMemberGreen, byte interfaceMemberBlue)
@@ -110,10 +125,15 @@ namespace FezHat
                 {
                     if (_isRunningOnPi)
                     {
-                        _fezhat.D3.Color = new FEZHAT.Color(interfaceMemberRed, interfaceMemberGreen, interfaceMemberBlue);
+                        SetRgbLedD3Color(interfaceMemberRed, interfaceMemberGreen, interfaceMemberBlue);
                     }
                     return FezHatSetRgbLedD3ColorResult.CreateSuccessResult();
                 }).AsAsyncOperation());
+        }
+
+        private void SetRgbLedD3Color(byte red, byte green, byte blue)
+        {
+            _fezhat.D3.Color = new FEZHAT.Color(red, green, blue);
         }
 
         public IAsyncOperation<FezHatGetLightSensorValueResult> GetLightSensorValueAsync(AllJoynMessageInfo info)
