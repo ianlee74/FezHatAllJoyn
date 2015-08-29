@@ -13,7 +13,7 @@
                 <RowDefinition/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <TextBlock Text="Available lightbulbs"/>
+            <TextBlock Text="Available FEZ HATs"/>
             <ListBox ItemsSource="{Binding FezHats}" Grid.Row="1" SelectedValue="{Binding SelectedFezHat,Mode=TwoWay}">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
@@ -21,12 +21,15 @@
                             <TextBlock Text="{Binding DefaultAppName}"/>
                             <TextBlock Text="{Binding UniqueName}"/>
                             <TextBlock Text="{Binding ModelNumber}"/>
-                            <TextBlock Text="{Binding DateOfManufacture}"/>
-                        </StackPanel>
+                        <TextBlock Text="{Binding DateOfManufacture}"/>
+                        <TextBlock Text="{Binding Temperature}"/>
+                        <TextBlock Text="{Binding LightLevel}"/>
+                    </StackPanel>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
             <ToggleSwitch Grid.Row="2" Header="Light Status" Toggled="OnRedLedToggled"/>
+            <Button Grid.Row="2" Background="{Binding Dio18ButtonColor}">DIO18 Pressed</Button>
         </Grid>
     </Page>
 

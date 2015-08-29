@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.Devices.AllJoyn;
+using Windows.Devices;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.System.Profile;
@@ -18,6 +19,7 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using com.ianlee.FezHat;
 using GHIElectronics.UAP.Shields;
+using Windows.Devices.Gpio;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -33,6 +35,7 @@ namespace FezHat
         private readonly bool _isRunningOnPi;
         private AllJoynBusAttachment _busAttachment;
         private FezHatProducer _producer;
+        private DispatcherTimer _buttonMonitor;
 
         public MainPage()
         {
@@ -46,7 +49,21 @@ namespace FezHat
             if (_isRunningOnPi)
             {
                 Task.Run(async () => _fezhat = await FEZHAT.CreateAsync());
+                _buttonMonitor = new DispatcherTimer();
+                _buttonMonitor.Interval = new TimeSpan(TimeSpan.TicksPerSecond/4);
+                _buttonMonitor.Tick += ButtonMonitorOnTick;
+                _buttonMonitor.Start();
             }
+        }
+
+        private void ButtonMonitorOnTick(object sender, object o)
+        {
+            if (_fezhat != null && _fezhat.IsDIO18Pressed())
+            {
+                Debug.WriteLine("Button DIO18 was pressed!");
+                _producer.Signals.ButtonDio18Pressed();
+            }
+
         }
 
         private void OnLoaded(object sender, RoutedEventArgs e)
@@ -142,7 +159,7 @@ namespace FezHat
                 Task.Run(() =>
                 {
                     var lightLevel = 0.0;
-                    if (_isRunningOnPi)
+                    if (_isRunningOnPi && _fezhat != null)
                     {
                         lightLevel = _fezhat.GetLightLevel();
                     }
@@ -156,7 +173,7 @@ namespace FezHat
                 Task.Run(() =>
                 {
                     var tempC = 0.0;
-                    if (_isRunningOnPi)
+                    if (_isRunningOnPi && _fezhat != null)
                     {
                         tempC = _fezhat.GetTemperature();
                     }
