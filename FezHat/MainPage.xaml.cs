@@ -57,6 +57,8 @@ namespace FezHat
             busAttachment.AboutData.DateOfManufacture = DateTime.Now;
             busAttachment.AboutData.DefaultAppName = "Ian's FEZ HAT";
             busAttachment.AboutData.DefaultDescription = "Controls and monitors the devices on the FEZ HAT.";
+            busAttachment.AboutData.ModelNumber = "Model #1";
+            busAttachment.AboutData.SoftwareVersion = "1.0";
             busAttachment.AboutData.SupportUrl = new Uri("http://ianlee.info");
         }
 
