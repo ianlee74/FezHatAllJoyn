@@ -21,20 +21,18 @@ namespace FezHatExplorer
         private FezHatWatcher _fezHatWatcher;
         private FezHatItem _selectedFezHat;
 
-        public ObservableCollection<FezHatItem> FezHats { get; }
+        public TrulyObservableCollection<FezHatItem> FezHats { get; }
         public event PropertyChangedEventHandler PropertyChanged;
 
         public MainPage()
         {
             InitializeComponent();
             Loaded += OnLoaded;
-            FezHats = new ObservableCollection<FezHatItem>
+            FezHats = new TrulyObservableCollection<FezHatItem>
             {
-                new FezHatItem()
-                {
-                    DefaultAppName = "Test FEZ",
-                    UniqueName = "abc123"
-                }
+                new MockFezHat(1),
+                new MockFezHat(2),
+                new MockFezHat(3)
             };
 
             var sensorPollTimer = new DispatcherTimer {Interval = new TimeSpan(0, 0, 1)};
@@ -47,17 +45,19 @@ namespace FezHatExplorer
             if (FezHats == null || FezHats.Count == 0) return;
             Task.Run(async () =>
             {
-                foreach (var item in FezHats)
+                var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
+                await dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
                 {
-                    if (item.Consumer == null) continue;
-                    var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
-                    await dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+                    foreach (var item in FezHats)
                     {
-                        item.Temperature = (await item.Consumer.GetTemperatureSensorValueAsync()).ValueF;
-                        item.LightLevel = (await item.Consumer.GetLightSensorValueAsync()).Value;
-                    });
-                    Debug.WriteLine("{0} :\t Temp = {1} \t LightLevel = {2}", item.UniqueName, item.Temperature, item.LightLevel);
-                }
+                        if (item.Consumer != null)
+                        {
+                            item.Temperature = (await item.Consumer.GetTemperatureSensorValueAsync()).ValueF;
+                            item.LightLevel = (await item.Consumer.GetLightSensorValueAsync()).Value;
+                        }
+                        Debug.WriteLine("{0} :\t Temp = {1} \t LightLevel = {2}", item.UniqueName, item.Temperature, item.LightLevel);
+                    }
+                });
             });
         }
 
