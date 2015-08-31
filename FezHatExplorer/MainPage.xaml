@@ -5,31 +5,85 @@
     xmlns:local="using:FezHatExplorer"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:data="using:FezHatExplorer.Model"
     mc:Ignorable="d">
 
+    <Page.Resources>
+        <!--#region DataTemplate-->
+        <!-- When using x:Bind, you need to set x:DataType -->
+        <DataTemplate x:Name="FezHatItemGridViewTemplate" x:DataType="data:FezHatItem">
+            <StackPanel Orientation="Horizontal">
+                <StackPanel Orientation="Vertical">
+                    <Image x:Name="Image"
+                           Width="200"
+                           Height="200"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Source="Assets/FezHat.jpg"
+                           Margin="10,4,10,0"/>
+                    <TextBlock x:Name="DefaultAppName" 
+                                   Margin="0,0,0,0"
+                                   Text="{x:Bind DefaultAppName}" 
+                                   x:Phase="2" 
+                                   Style="{ThemeResource BodyTextBlockStyle}" 
+                                   HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="UniqueName" 
+                                   Text="{x:Bind UniqueName}" 
+                                   Margin="4,4,0,4"
+                                   x:Phase="3" 
+                                   Style="{ThemeResource BodyTextBlockStyle}"
+                                   FontSize="12"
+                                   Foreground="Gray"
+                                   HorizontalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Orientation="Vertical">
+                    <TextBlock Text="{x:Bind ModelNumber}"/>
+                    <TextBlock Text="{x:Bind DateOfManufacture}"/>
+                    <TextBlock Text="{x:Bind Temperature}"/>
+                    <TextBlock Text="{x:Bind LightLevel}"/>
+                    <ToggleSwitch Header="Light Status" Toggled="OnRedLedToggled" IsOn="{x:Bind RedLedIsOn}"/>
+                    <ToggleSwitch Header="DIO18 Pressed" IsOn="{x:Bind ButtonDio18IsPressed}"/>
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
+        <!--#endregion-->
+    </Page.Resources>
+    
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            <TextBlock Text="Available FEZ HATs"/>
-            <ListBox ItemsSource="{Binding FezHats}" Grid.Row="1" SelectedValue="{Binding SelectedFezHat,Mode=TwoWay}">
-                <ListBox.ItemTemplate>
-                    <DataTemplate>
-                        <StackPanel>
-                            <TextBlock Text="{Binding DefaultAppName}"/>
-                            <TextBlock Text="{Binding UniqueName}"/>
-                            <TextBlock Text="{Binding ModelNumber}"/>
-                        <TextBlock Text="{Binding DateOfManufacture}"/>
-                        <TextBlock Text="{Binding Temperature}"/>
-                        <TextBlock Text="{Binding LightLevel}"/>
-                    </StackPanel>
-                    </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-            <ToggleSwitch Grid.Row="2" Header="Light Status" Toggled="OnRedLedToggled"/>
-            <Button Grid.Row="2" Background="{Binding Dio18ButtonColor}">DIO18 Pressed</Button>
-        </Grid>
-    </Page>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Button Style="{StaticResource SplitViewTogglePaneButtonStyle}"
+                    VerticalAlignment="Center"/>
+        <TextBlock Text="FEZ HAT Explorer" 
+                   VerticalAlignment="Center"
+                   Style="{ThemeResource TitleTextBlockStyle}" 
+                   Grid.Row="0"
+                   Grid.Column="1"
+                   Margin="10,10,10,0"/>
+
+        <GridView ItemsSource="{x:Bind FezHats}"
+                  ItemTemplate="{StaticResource FezHatItemGridViewTemplate}"
+                  Grid.Row="1"
+                  Grid.Column="1"
+                  Grid.ColumnSpan="1">
+            <GridView.GroupStyle>
+                <GroupStyle>
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate x:DataType="data:FezHatItem"> 
+                            <TextBlock Text="{x:Bind UniqueName}" 
+                                       Style="{ThemeResource TitleTextBlockStyle}"/>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </GridView.GroupStyle>
+        </GridView>
+    </Grid>
+</Page>
 

@@ -4,14 +4,14 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.Devices.AllJoyn;
-using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using FezHatExplorer.Model;
 
 namespace FezHatExplorer
 {
@@ -20,46 +20,44 @@ namespace FezHatExplorer
         private AllJoynBusAttachment _busAttachment;
         private FezHatWatcher _fezHatWatcher;
         private FezHatItem _selectedFezHat;
-        private DispatcherTimer _sensorPollTimer;
 
         public ObservableCollection<FezHatItem> FezHats { get; }
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public class FezHatItem : INotifyPropertyChanged
-        {
-            public string UniqueName { get; set; }
-            public string DefaultAppName { get; set; }
-            public string ModelNumber { get; set; }
-            public DateTimeOffset? DateOfManufacture { get; set; }
-            public double Temperature { get; set; }
-            public double LightLevel { get; set; }
-            public FezHatConsumer Consumer { get; set; }
-
-            public event PropertyChangedEventHandler PropertyChanged;
-        }
-    public MainPage()
+        public MainPage()
         {
             InitializeComponent();
             Loaded += OnLoaded;
-            FezHats = new ObservableCollection<FezHatItem>();
+            FezHats = new ObservableCollection<FezHatItem>
+            {
+                new FezHatItem()
+                {
+                    DefaultAppName = "Test FEZ",
+                    UniqueName = "abc123"
+                }
+            };
 
-            _sensorPollTimer = new DispatcherTimer {Interval = new TimeSpan(0, 0, 1)};
-            _sensorPollTimer.Tick += SensorPollTimerOnTick;
-            _sensorPollTimer.Start();
+            var sensorPollTimer = new DispatcherTimer {Interval = new TimeSpan(0, 0, 1)};
+            sensorPollTimer.Tick += SensorPollTimerOnTick;
+            sensorPollTimer.Start();
         }
 
         private void SensorPollTimerOnTick(object sender, object o)
         {
-            if (SelectedFezHat == null) return;
+            if (FezHats == null || FezHats.Count == 0) return;
             Task.Run(async () =>
             {
-                var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
-                await dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
+                foreach (var item in FezHats)
                 {
-                    SelectedFezHat.Temperature = (await SelectedFezHat.Consumer.GetTemperatureSensorValueAsync()).ValueF;
-                    SelectedFezHat.LightLevel = (await SelectedFezHat.Consumer.GetLightSensorValueAsync()).Value;
-                });
-                Debug.WriteLine("{0} :\t Temp = {1} \t LightLevel = {2}", SelectedFezHat.UniqueName, SelectedFezHat.Temperature, SelectedFezHat.LightLevel);
+                    if (item.Consumer == null) continue;
+                    var dispatcher = CoreApplication.MainView.CoreWindow.Dispatcher;
+                    await dispatcher.RunAsync(CoreDispatcherPriority.Normal, async () =>
+                    {
+                        item.Temperature = (await item.Consumer.GetTemperatureSensorValueAsync()).ValueF;
+                        item.LightLevel = (await item.Consumer.GetLightSensorValueAsync()).Value;
+                    });
+                    Debug.WriteLine("{0} :\t Temp = {1} \t LightLevel = {2}", item.UniqueName, item.Temperature, item.LightLevel);
+                }
             });
         }
 
@@ -104,16 +102,10 @@ namespace FezHatExplorer
 
         private void Signals_ButtonDio18PressedReceived(FezHatSignals sender, FezHatButtonDio18PressedReceivedEventArgs args)
         {
-            Debug.WriteLine("BUTTON DIO18 WAS PRESSED!");
-
-            if (Dio18Color.R == 255)
-            {
-                Dio18Color = Colors.Blue;
-            }
-            else
-            {
-                Dio18Color = Colors.Red;
-            }
+            var senderName = args.MessageInfo.SenderUniqueName;
+            var item = FezHats.First(c => c.UniqueName == senderName);
+            item.ButtonDio18IsPressed = !item.ButtonDio18IsPressed;
+            Debug.WriteLine(string.Format("{0} : BUTTON DIO18 WAS PRESSED!", senderName));
         }
 
         async void OnFezHatLost(FezHatConsumer sender, AllJoynSessionLostEventArgs args)
@@ -126,6 +118,7 @@ namespace FezHatExplorer
               }
             );
         }
+
         public FezHatItem SelectedFezHat
         {
             get
@@ -136,34 +129,28 @@ namespace FezHatExplorer
             {
                 if (_selectedFezHat == value) return;
                 _selectedFezHat = value;
-                RaisePropertyChanged("SelectedFezHat");
+                OnPropertyChanged();
             }
-        }
-        void RaisePropertyChanged(string property)
-        {
-            var changeWatchers = PropertyChanged;
-            if (changeWatchers != null)
-            {
-                changeWatchers(this, new PropertyChangedEventArgs(property));
-            }
-        }
-        async void OnRedLedToggled(object sender, RoutedEventArgs e)
-        {
-            if (SelectedFezHat == null) return;
-            var value = ((ToggleSwitch)sender).IsOn;
-            await SelectedFezHat.Consumer.SetRedLedStateAsync(value);
         }
 
-        public Color Dio18Color
+        void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
-            get {  return _dio18Color;}
-            set
+            var handler = PropertyChanged;
+            if (handler != null)
             {
-                if (_dio18Color.GetHashCode() == value.GetHashCode()) return;
-                _dio18Color = value;
-                RaisePropertyChanged("Dio18Color");
-            }   
+                handler(this, new PropertyChangedEventArgs(propertyName));
+            }
         }
-        private Color _dio18Color;
+
+        async void OnRedLedToggled(object sender, RoutedEventArgs e)
+        {
+            //if (SelectedFezHat == null) return;
+            var state = ((ToggleSwitch) sender).IsOn;
+            var item = (FezHatItem)((ToggleSwitch)sender).DataContext;
+            if (item.Consumer != null)
+            {
+                await item.Consumer.SetRedLedStateAsync(state);
+            }
+        }
     }
 }
